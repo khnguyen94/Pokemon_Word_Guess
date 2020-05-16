@@ -1,5 +1,8 @@
+// Initiate variable for the current letter guessed
+let currentLetterGuess; 
+
 // Initiate counter variables to be used
-let liveCounter, winsCounter, lossesCounter, pikachuHeath;
+let winsCounter, lossesCounter, pikachuHeath;
 
 // Initiate word bank variables
 let currentPokemonName;
@@ -209,7 +212,6 @@ window.onload = () => {
   currentPokemonWrongGuessesText = document.getElementById(
     "currentPokemonWrongGuessesText"
   );
-  livesCounterText = document.getElementById("livesCounterText");
   winsCounterText = document.getElementById("winsCounterText");
   lossesCounterText = document.getElementById("lossesCounterText");
   pikachuHealthText = document.getElementById("pikachuHealthText");
@@ -301,8 +303,85 @@ let checkLetterInName = (letter) => {
     // Console log currentPokemonNameText
     console.log(currentPokemonNameText);
   } else {
-    // asdf
+    // Else if the letter guessed is not in the name array, then add it to the wrong guess array
+    currentGuessedLettersArr.push(letter);
+
+    // Subtract 10% from pikachu's health
+    pikachuHeath -= 10;
   }
 };
 
-// Create a function to
+// Create a function that updates the all the counters and HTML elements
+let roundComplete = () => {
+  // Console log counters after every round
+  console.log(
+    "Wins: " +
+      winsCounter +
+      "Losses: " +
+      lossesCounter +
+      "Health: " +
+      pikachuHeath
+  );
+
+  // Update HTML elements pikachu's health, name array, and wrong guesses array
+  pikachuHealthText.innerHTML = pikachuHeath;
+  currentPokemonNameText.innerHTML = currentPokemonNameText.join(" ");
+  currentPokemonWrongGuessedText.innerHTML = currentPokemonWrongGuessedText.join(
+    " "
+  );
+
+  // If all letters of the Pokemon's name are guessed and they match the original name,
+  if (
+    currentPokemonNameLetters.toString() === currentPokemonNameText.toString()
+  ) {
+    // Then increment win counter
+    winsCounter += 1;
+
+    // Alert user of win
+    alert("You guessed the Pokemon! You win!");
+
+    // Update the win counter in HTML
+    winsCounterText = winsCounter;
+
+    // Restart the game
+    startGame();
+  }
+
+  // Else if, Pikachu's health is at 0%
+  else if (pikachuHeath === 0) {
+    // Then increment loss counter
+    lossesCounter += 1;
+
+    // Alert user of loss and answer
+    alert(
+      "Pikachu is dead! The correct answer was " +
+        currentPokemonNameLetters.toString()
+    );
+
+    // Update loss counter in HTML
+    lossesCounterText = lossesCounter;
+
+    // Restart the game
+    startGame();
+  }
+};
+
+// Main Process
+
+// Start the game
+startGame();
+
+// Initiate key click capture
+document.onkeyup = function (event) {
+  // Check if key pressed is a letter
+  if (event.keyCode >= 65 && event.keyCode < 90) {
+    // Convert all key clicks to lower case
+    currentLetterGuess = event.key.toLocaleLowerCase();
+
+    // Run function to check checkLetterInName
+    checkLetterInName(currentLetterGuess); 
+
+    // Run code for roundComplete
+    roundComplete();
+  }
+};
