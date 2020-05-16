@@ -1,11 +1,13 @@
 // Initiate variable for the current letter guessed
-let currentLetterGuess; 
+let currentLetterGuess;
 
 // Initiate counter variables to be used
 let winsCounter, lossesCounter, pikachuHeath;
 
-// Initiate word bank variables
-let currentPokemonName;
+// Initiate word model variables
+let currentPokemonName,
+  currentPokemonNameModel,
+  currentPokemonWrongGuessedLettersModel;
 
 // Initialize references to HTML elements
 let currentPokemonNameText,
@@ -205,7 +207,7 @@ window.onload = () => {
   // When restart button is pushed, re-initialize the game
   document
     .getElementById("restartButton")
-    .addEventListener("click", initializeGame);
+    .addEventListener("click", initializeGame());
 
   // Get references to the HTML text elements
   currentPokemonNameText = document.getElementById("currentPokemonNameText");
@@ -225,11 +227,11 @@ window.onload = () => {
   copyLetterBank = letterBank;
 
   // Then initialize the game
-  initializeGame();
+  initializeGameFunc();
 };
 
 // Create the function that will initialize the game
-let initializeGame = () => {
+let initializeGameFunc = () => {
   // Reset Pikachu's health to 100%
   pikachuHeath = 100;
 
@@ -238,34 +240,34 @@ let initializeGame = () => {
     pokemonNameBank[Math.floor(Math.random() * pokemonNameBank.length)];
 
   // Break up the word in to an array of individual letters
-  currentPokemonNameLetters = currentPokemonName.split("");
+  currentPokemonNameModel = currentPokemonName.split("");
 
   // Create a variable that equates to the number of of letters in the word
-  numberOfBlanks = currentPokemonNameLetters.length;
+  numberOfBlanks = currentPokemonNameModel.length;
 
   // Console log chosenPokemonName, currentPokemonNameLetters, numberOfBlanks
-  console.log(currentPokemonName);
-  console.log(currentPokemonNameLetters);
-  console.log(numberOfBlanks);
+  console.log("Current Pokemon: " + currentPokemonName);
+  console.log("Current Pokemon: " + currentPokemonNameModel);
+  console.log("NumBlanks: " + numberOfBlanks);
 
-  // Reset the currentPokemonNameArr
-  currentPokemonNameArr = [];
+  // Reset the currentPokemonNameModel
+  currentPokemonNameModel = [];
 
-  // Reset the currentGuessedLettersArr
-  currentGuessedLettersArr = [];
+  // Reset the currentGuessedLettersModel
+  currentPokemonWrongGuessedLettersModel = [];
 
   // Create a function that will populate the currentPokemonNameArr with underscores equal to numberOfBlanks
-  let populateCurrentPokemonNameArr = (num) => {
+  let populateCurrentPokemonNameArrFunc = (num) => {
     for (var i = 0; i < num; i++) {
       currentPokemonNameArr.push("_");
     }
   };
 
   // Run populateCurrentPokemonNameArr
-  populateCurrentPokemonNameArr(numberOfBlanks);
+  populateCurrentPokemonNameArrFunc(numberOfBlanks);
 
   // Console log populateCurrentPokemonNameArr
-  console.log(currentPokemonNameArr);
+  console.log("Current array: " + currentPokemonNameArr);
 
   // Print these blanks to the corresponding HTML element
   currentPokemonNameText.innerHTML = currentPokemonNameArr.join(" ");
@@ -278,10 +280,31 @@ let initializeGame = () => {
   console.log(currentPokemonWrongGuessesText);
 };
 
+// Create a function to check if the letter guess is in an array
+let checkLetterInArrayFunc = (letter, array) => {
+  // Initialize a boolean set to false
+  let isInArray = false;
+
+  // Toggle if the letter is in the array
+  for (var i = 0; i < array.length; i++) {
+    if (array[i] === letter) {
+      isInArray = true;
+    }
+  }
+
+  return isInArray;
+};
+
+// Create a function to update the wrongGuessedLetters model and update the HTML dom element
+let updateWrongGuessedLetters = (letter) => {
+    // Add to wrongGuessed
+  currentPokemonWrongGuessesText.push(letter);
+};
+
 // Create a function to check if the letter guess is in the current Pokemon name array
 // letter is the letter being guessed
 // nameArray is the current pokemon array the guessed letter is being compared to
-let checkLetterInName = (letter) => {
+let checkLetterIn = (letter) => {
   // Initiate a boolean that is initially set to false, will toggle if a guessed letter is found in the name array
   let letterInWord = false;
 
@@ -292,9 +315,19 @@ let checkLetterInName = (letter) => {
     }
   }
 
+  // Initiate a boolean that is initially set to false, will toggle if the new letter is a newly guessed letter
+  let isNewLetter = true;
+
+  // Check if letter is in the array of letters already guessed
+  for (var j = 0; j < currentPokemonNameText; j++) {
+    if (currentPokemonWrongGuessesText[k] === letter) {
+      isNewLetter = false;
+    }
+  }
+
   // If the letter exists in the name array then find all indices and populate indices with letter
-  if (letterInWord) {
-    for (var j = 0; j < numberOfBlanks; j++) {
+  if (letterInWord && isNewLetter) {
+    for (var k = 0; k < numberOfBlanks; k++) {
       if (currentPokemonName[j] === letter) {
         currentPokemonNameText[j] === letter;
       }
@@ -302,12 +335,18 @@ let checkLetterInName = (letter) => {
 
     // Console log currentPokemonNameText
     console.log(currentPokemonNameText);
+  } else if (isNewLetter === false) {
+    console.log("You've already guessed the letter: " + letter);
+    alert("You've already guessed the letter: " + letter);
   } else {
     // Else if the letter guessed is not in the name array, then add it to the wrong guess array
     currentGuessedLettersArr.push(letter);
 
     // Subtract 10% from pikachu's health
     pikachuHeath -= 10;
+
+    console.log("The letter " + letter + " is not in the Pokemon's name");
+    alert("The letter " + letter + " is not in the Pokemon's name");
   }
 };
 
@@ -369,7 +408,7 @@ let roundComplete = () => {
 // Main Process
 
 // Start the game
-startGame();
+// startGame();
 
 // Initiate key click capture
 document.onkeyup = function (event) {
@@ -379,9 +418,11 @@ document.onkeyup = function (event) {
     currentLetterGuess = event.key.toLocaleLowerCase();
 
     // Run function to check checkLetterInName
-    checkLetterInName(currentLetterGuess); 
+    checkLetterInName(currentLetterGuess);
 
     // Run code for roundComplete
     roundComplete();
   }
 };
+
+
