@@ -2,23 +2,32 @@
 let currentLetterGuess;
 
 // Initiate counter variables to be used
-let winsCounter, lossesCounter, pikachuHeath;
+let winsCounter,
+  lossesCounter,
+  guessesLeftCounter,
+  pikachuHeath,
+  pikachuMaxHealth;
 
-// Initiate word model variables
-let currentPokemonName,
-  currentPokemonNameModel,
-  currentPokemonWrongGuessedLettersModel;
+// Initiate wins and losses counter
+winsCounter = 0;
+lossesCounter = 0;
 
-// Initialize references to HTML elements
-let currentPokemonNameText,
-  currentPokemonWrongGuessedText,
-  livesCounterText,
-  winsCounterText,
-  lossesCounterText,
-  pikachuHealthText;
+// Initiate dict, models, arrays variables
+let currentPokemonName = "";
+let currentPokemonNameDict = {};
+let currentPokemonNameModel = [];
+let currentPokemonGuessedLettersArr = [];
+let pokemonNameBankCopy = [];
+
+// Initialize references to HTML elements and get references to the HTML text elements
+var $currentPokemonNameText = $("#currentPokemonNameText");
+var $currentPokemonWrongGuessesText = $("#currentPokemonWrongGuessesText");
+var $winsCounterText = $("winsText");
+var $lossesCounterText = $("#lossesText");
+var $pikachuHealthBar = $("#pikachuHealthBar");
 
 // Initate a name bank of Pokemon names
-let pokemonNameBank = [
+const pokemonNameBank = [
   "bulbasaur",
   "ivysaur",
   "venusaur",
@@ -172,8 +181,10 @@ let pokemonNameBank = [
   "mew",
 ];
 
+pokemonNameBankCopy = [...pokemonNameBank];
+
 // Initiate a letter bank of the alphabet
-let letterBank = [
+const letterBank = [
   "a",
   "b",
   "c",
@@ -205,224 +216,229 @@ let letterBank = [
 // On page load, execute this function
 window.onload = () => {
   // When restart button is pushed, re-initialize the game
-  document
-    .getElementById("restartButton")
-    .addEventListener("click", initializeGame());
+  $(document).ready(function () {
+    $("#restartButton").click(function () {
+      initializeGameFunc();
+    });
+  });
 
-  // Get references to the HTML text elements
-  currentPokemonNameText = document.getElementById("currentPokemonNameText");
-  currentPokemonWrongGuessesText = document.getElementById(
-    "currentPokemonWrongGuessesText"
-  );
-  winsCounterText = document.getElementById("winsCounterText");
-  lossesCounterText = document.getElementById("lossesCounterText");
-  pikachuHealthText = document.getElementById("pikachuHealthText");
-
-  // Initiate wins and losses counter
-  winsCounter = 0;
-  lossesCounter = 0;
+  $winsCounterText.textContent = "Wins: 0";
+  $lossesCounterText.textContent = "Losses: 0";
 
   // Create copies of the letter bank and pokemon name bank for modification between rounds of guessing
-  copyPokemonNameBank = pokemonNameBank;
-  copyLetterBank = letterBank;
+  pokemonNameBankCopy = [...pokemonNameBank];
 
   // Then initialize the game
   initializeGameFunc();
 };
 
-// Create the function that will initialize the game
+// Create a function to check if the letter guess is in an array
+let checkLetterInArrayFunc = (letter, array) => {
+  return array.includes(letter);
+};
+
+// Create a function to check if letter exists within a dictionary of the currentPokemonName
+// NOTE: one letter can appear multiple times
+let checkLetterinDictFunc = (letter, dict) => {
+  for (var i = 0; i < dict.length; i++) {
+    // If the letter matches the dict value at that index, then return true
+    if (dict[i] === letter) {
+      return true;
+    }
+  }
+  // Else if letter is not in the dict then return false
+  return false;
+};
+
+// Create a function that updates the currentPokemonGuessedLettersArr and the HTML element
+let updateLettersGuessedFunc = (letter, arr) => {
+  // First, update the model by pushing the wrongly guess letter into the array
+  arr.push(letter);
+
+  console.log("Guess Arr: " + arr);
+
+  // Second, update the HTML element
+  $currentPokemonWrongGuessesText.innerText = arr;
+};
+
+// Create a function that handles what happens when the player guesses a correct letter
+let rightGuessFunc = (letter, dict, model) => {
+  // Check the letter against each value in the NameDict
+  for (var i = 0; i < dict.length; i++) {
+    // If there is match between the letter guessed and the letter at the DictModel index,
+    // replace that guessed letter to the array at the next index, dict[i][1]
+    if (dict[i][0] === letter) {
+      // Loop through entire dict and for every match to the letter, change that blank of model at that index
+      for (var j = 0; j < dict.length; j++) {
+        model[j] === letter;
+      }
+    }
+  }
+
+  console.log(dict);
+  console.log(model);
+};
+
+// Create a function to check if all the letters have been guessed in the current NameModel
+let checkCompletedNameModelFunc = (name, model, bankCopy) => {
+  // Initiate a new variable to hold the name being guessed in its current state
+  let modelName = "";
+
+  // Build the word using the NameModel
+  for (var i = 0; i < model.length; i++) {
+    modelName += model[i];
+
+    // Match the NameModel word to the currentPokemonName
+    if (name === modelName) {
+      // Increment wins
+      winsCounter += 1;
+
+      // Update the HTML element for wins
+      winsCounterText.textContent = winsCounter;
+
+      // Remove that Pokemon from the pokemonNameBankCopy
+      bankCopy.splice(bankCopy.indexOf(name), 1);
+
+      console.log(bankCopy);
+
+      // Restart the game
+      initializeGameFunc();
+    }
+  }
+};
+
+// Create a function to handle the wrong letter being guessed
+let wrongGuessFunc = () => {
+  // Decrement guessesLeftCounter
+  guessesLeftCounter -= 1;
+
+  // Decrement Pikachu's health points
+  pikachuHeath -= 1;
+
+  // Update HTML text element for Pikachu's health bar
+  $pikachuHealthBar.textContent = pikachuHeath + "/10";
+
+  // Update the width of Pikachu's health bar
+  updateHealthbarFunc(guessesLeftCounter);
+
+  console.log($pikachuHealthBar); 
+};
+
+// Create a function that updates the width of Pikachu's health bar
+let updateHealthbarFunc = (number) => {
+  $pikachuHealthBar.style.width = (number / pikachuMaxHealth) * 100 + "%";
+};
+
+// Create a function when Pikachu runs out of health
+let roundLostFunc = () => {
+  // Increment lossesCounter
+  lossesCounter += 1;
+
+  // Update the HTML element for losses
+  lossesCounterText.textContent = lossesCounter;
+
+  // Restart Game
+  initializeGameFunc();
+};
+
+// Create a function that handles key presses
+document.onkeyup = (event) => {
+  // Initialize a variable to hold the key pressed
+  let keyPressed;
+
+  // Set that key to lowercase
+  keyPressed = event.key.toLocaleLowerCase();
+
+  // Check to see if keyPressed is valid letter in letterBank
+  if (checkLetterInArrayFunc(keyPressed, letterBank)) {
+    // If keyPressed has NOT been guessed
+    // and that keyPressed matches a letter in the current Dict
+    if (
+      !checkLetterInArrayFunc(keyPressed, currentPokemonGuessedLettersArr) &&
+      checkLetterinDictFunc(keyPressed, currentPokemonNameDict)
+    ) {
+      // Then add keyPressed to guessedLettersArr
+      updateLettersGuessedFunc(keyPressed, currentPokemonGuessedLettersArr);
+
+      // Run rightGuessFunc
+      rightGuessFunc(
+        keyPressed,
+        currentPokemonNameDict,
+        currentPokemonNameModel
+      );
+
+      // Check to see if they completed the word by running the checkCompletedNameModelFunc
+      checkCompletedNameModelFunc(
+        currentPokemonName,
+        currentPokemonNameModel,
+        pokemonNameBankCopy
+      );
+    }
+
+    // If keyPressed has NOT been guessed
+    // and that keyPressed DOES NOT match a letter in the current Dict
+    else if (
+      !checkLetterInArrayFunc(keyPressed, currentPokemonGuessedLettersArr) &&
+      !checkLetterinDictFunc(keyPressed, currentPokemonNameDict)
+    ) {
+      // Then add keyPressed to guessedLettersArr
+      updateLettersGuessedFunc(keyPressed, currentPokemonGuessedLettersArr);
+
+      // Run wrongGuessFunc
+      wrongGuessFunc();
+
+      // If Pikachu is out of health, run roundLostFunc
+      if (guessesLeftCounter === 0) {
+        roundLostFunc();
+      }
+    }
+  }
+};
+
+// Create a function that runs on page load or when restart button is clicked
 let initializeGameFunc = () => {
-  // Reset Pikachu's health to 100%
-  pikachuHeath = 100;
+  // Empty out all word bank variables
+  currentPokemonName = "";
+  currentPokemonNameDict = {};
+  currentPokemonNameModel = [];
+  currentPokemonGuessedLettersArr = [];
+
+  // Set Pikachu's health to 10
+  pikachuHeath = 10;
 
   // Randomly choose word from the PokemonNameBank
   currentPokemonName =
-    pokemonNameBank[Math.floor(Math.random() * pokemonNameBank.length)];
+    pokemonNameBankCopy[Math.floor(Math.random() * pokemonNameBankCopy.length)];
 
   // Break up the word in to an array of individual letters
-  currentPokemonNameModel = currentPokemonName.split("");
+  currentPokemonNameDict = currentPokemonName.split("");
 
   // Create a variable that equates to the number of of letters in the word
-  numberOfBlanks = currentPokemonNameModel.length;
+  numberOfBlanks = currentPokemonNameDict.length;
 
   // Console log chosenPokemonName, currentPokemonNameLetters, numberOfBlanks
-  console.log("Current Pokemon: " + currentPokemonName);
-  console.log("Current Pokemon: " + currentPokemonNameModel);
+  console.log("Name: " + currentPokemonName);
+  console.log("Dict: " + currentPokemonNameDict);
   console.log("NumBlanks: " + numberOfBlanks);
 
-  // Reset the currentPokemonNameModel
-  currentPokemonNameModel = [];
-
-  // Reset the currentGuessedLettersModel
-  currentPokemonWrongGuessedLettersModel = [];
-
-  // Create a function that will populate the currentPokemonNameArr with underscores equal to numberOfBlanks
+  // Create a function that will populate the currentPokemonNameModel with underscores equal to numberOfBlanks
   let populateCurrentPokemonNameArrFunc = (num) => {
     for (var i = 0; i < num; i++) {
-      currentPokemonNameArr.push("_");
+      currentPokemonNameModel.push("_");
     }
   };
 
-  // Run populateCurrentPokemonNameArr
+  // Run populateCurrentPokemonNameArrS
   populateCurrentPokemonNameArrFunc(numberOfBlanks);
 
   // Console log populateCurrentPokemonNameArr
-  console.log("Current array: " + currentPokemonNameArr);
+  console.log("Model: " + currentPokemonNameModel);
 
   // Print these blanks to the corresponding HTML element
-  currentPokemonNameText.innerHTML = currentPokemonNameArr.join(" ");
-
-  console.log(currentPokemonNameText);
+  currentPokemonNameText = currentPokemonNameModel.join(" ");
 
   // Clear wrong guesses from previous round
-  currentPokemonWrongGuessesText.innerHTML = currentGuessedLettersArr.join(" ");
-
-  console.log(currentPokemonWrongGuessesText);
-};
-
-// Create a function to check if the letter guess is in an array
-let checkLetterInArrayFunc = (letter, array) => {
-  // Initialize a boolean set to false
-  let isInArray = false;
-
-  // Toggle if the letter is in the array
-  for (var i = 0; i < array.length; i++) {
-    if (array[i] === letter) {
-      isInArray = true;
-    }
-  }
-
-  return isInArray;
-};
-
-// Create a function to update the wrongGuessedLetters model and update the HTML dom element
-let updateWrongGuessedLetters = (letter) => {
-    // Add to wrongGuessed
-  currentPokemonWrongGuessesText.push(letter);
-};
-
-// Create a function to check if the letter guess is in the current Pokemon name array
-// letter is the letter being guessed
-// nameArray is the current pokemon array the guessed letter is being compared to
-let checkLetterIn = (letter) => {
-  // Initiate a boolean that is initially set to false, will toggle if a guessed letter is found in the name array
-  let letterInWord = false;
-
-  // Check if letter is in the name array
-  for (var i = 0; i < numberOfBlanks; i++) {
-    if (currentPokemonName[i] === letter) {
-      letterInWord = true;
-    }
-  }
-
-  // Initiate a boolean that is initially set to false, will toggle if the new letter is a newly guessed letter
-  let isNewLetter = true;
-
-  // Check if letter is in the array of letters already guessed
-  for (var j = 0; j < currentPokemonNameText; j++) {
-    if (currentPokemonWrongGuessesText[k] === letter) {
-      isNewLetter = false;
-    }
-  }
-
-  // If the letter exists in the name array then find all indices and populate indices with letter
-  if (letterInWord && isNewLetter) {
-    for (var k = 0; k < numberOfBlanks; k++) {
-      if (currentPokemonName[j] === letter) {
-        currentPokemonNameText[j] === letter;
-      }
-    }
-
-    // Console log currentPokemonNameText
-    console.log(currentPokemonNameText);
-  } else if (isNewLetter === false) {
-    console.log("You've already guessed the letter: " + letter);
-    alert("You've already guessed the letter: " + letter);
-  } else {
-    // Else if the letter guessed is not in the name array, then add it to the wrong guess array
-    currentGuessedLettersArr.push(letter);
-
-    // Subtract 10% from pikachu's health
-    pikachuHeath -= 10;
-
-    console.log("The letter " + letter + " is not in the Pokemon's name");
-    alert("The letter " + letter + " is not in the Pokemon's name");
-  }
-};
-
-// Create a function that updates the all the counters and HTML elements
-let roundComplete = () => {
-  // Console log counters after every round
-  console.log(
-    "Wins: " +
-      winsCounter +
-      "Losses: " +
-      lossesCounter +
-      "Health: " +
-      pikachuHeath
-  );
-
-  // Update HTML elements pikachu's health, name array, and wrong guesses array
-  pikachuHealthText.innerHTML = pikachuHeath;
-  currentPokemonNameText.innerHTML = currentPokemonNameText.join(" ");
-  currentPokemonWrongGuessedText.innerHTML = currentPokemonWrongGuessedText.join(
+  $currentPokemonWrongGuessesText.html = currentPokemonGuessedLettersArr.join(
     " "
   );
-
-  // If all letters of the Pokemon's name are guessed and they match the original name,
-  if (
-    currentPokemonNameLetters.toString() === currentPokemonNameText.toString()
-  ) {
-    // Then increment win counter
-    winsCounter += 1;
-
-    // Alert user of win
-    alert("You guessed the Pokemon! You win!");
-
-    // Update the win counter in HTML
-    winsCounterText = winsCounter;
-
-    // Restart the game
-    startGame();
-  }
-
-  // Else if, Pikachu's health is at 0%
-  else if (pikachuHeath === 0) {
-    // Then increment loss counter
-    lossesCounter += 1;
-
-    // Alert user of loss and answer
-    alert(
-      "Pikachu is dead! The correct answer was " +
-        currentPokemonNameLetters.toString()
-    );
-
-    // Update loss counter in HTML
-    lossesCounterText = lossesCounter;
-
-    // Restart the game
-    startGame();
-  }
 };
-
-// Main Process
-
-// Start the game
-// startGame();
-
-// Initiate key click capture
-document.onkeyup = function (event) {
-  // Check if key pressed is a letter
-  if (event.keyCode >= 65 && event.keyCode < 90) {
-    // Convert all key clicks to lower case
-    currentLetterGuess = event.key.toLocaleLowerCase();
-
-    // Run function to check checkLetterInName
-    checkLetterInName(currentLetterGuess);
-
-    // Run code for roundComplete
-    roundComplete();
-  }
-};
-
-
